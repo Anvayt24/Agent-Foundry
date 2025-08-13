@@ -2,16 +2,22 @@ import os
 from langchain.chains import RetrievalQA
 from langchain_google_genai import ChatGoogleGenerativeAI
 from retriever import get_retriever
+from dotenv import load_dotenv
 
-# Expects GOOGLE_API_KEY in environment
+load_dotenv()
 
 def rag_tool(query: str, persist_directory: str = "rag_db", model: str = "gemini-1.5-flash", temperature: float = 0.1) -> str:
-    """
-    Run a Retrieval-Augmented Generation query using Gemini models via LangChain.
-    Set GOOGLE_API_KEY in environment before use.
-    """
+
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise RuntimeError("GEMINI_API_KEY not found. Add it to your .env or OS environment.")
+
     retriever = get_retriever(persist_directory)
-    llm = ChatGoogleGenerativeAI(model=model, temperature=temperature)
+    llm = ChatGoogleGenerativeAI(
+        model=model, 
+        temperature=temperature,
+        google_api_key=api_key
+    )
 
     qa_chain = RetrievalQA.from_chain_type(
         llm=llm,
@@ -32,7 +38,6 @@ def rag_answer_tool(query: str) -> str:
     return rag_tool(query)
 
 if __name__ == "__main__":
-    # Ensure GOOGLE_API_KEY is set in your environment before running
     test_query = "What is the purpose of this ?"
     answer = rag_tool(test_query)
     print(f"\nQ: {test_query}\nA: {answer}")
