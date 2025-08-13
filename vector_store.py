@@ -10,7 +10,6 @@ def build_vector_store(data_path: str, persist_directory="rag_db"):
         embedding=embeddings,
         persist_directory=persist_directory
     )
-    vectordb.persist()
     return vectordb
 
 
