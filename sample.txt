@@ -2,25 +2,3 @@ DAY 5 --> Arrays concept and practice of two pointers based questions.
  ~ so in two pointers ww use i and j and two pointers and place them accorsing to need of question.
  ~ we mostly use j to scan through all elements in the array and keep i at a position then apne condtion statements ke andar i ko increment ya jo karna hai karo 
  ~ two pointers normally sorted array ke liye hota hai , so when doing a question with unsorted array the use (A) BRUTE FORCE (nested loop) , (B) HASH MAP for O(n)
-
- DAY 6 --> Two pointers problems
- ~ in two pointers it is first to decide what will be the posityion of i and j , i is mostly at start index
- ~ j is to be decided , if we are for a sorted array then i and j will be next to each other i =0 then j=1 or i+1
- ~ in a unsorted array or an array that we have to sort or make a new rray in sorted style , using two pointers , j will be end index 
- ~ example - leetcode 977
- ~ in question 560 Sub array sum equals k , i solved it using brute force but time there will be O(n^2)
- ~ to optimize it i used hashmap and prefixsum , we perform prefix sum , then store that in hashmap and perform prefixsum-k and se how many times it occured
-
- DAY 7 --> Solved few old and new questions on array and two pointers
- ~ in 2161 we can use either ArrayList or normal array , but in arraylist it took around 18ms of time and with array it took less time so any cn be condidered
- ~ i made three different array and then store the left , middle and right elemnet in ti and then concatenated them together
-
- DAY 8 --> solved only one question on array
- ~ solved 3 sum with brute force time as O(n^3) and also optimized but with time of O(n^2) but only beat 23% maybe beacuse of hashset usage 
- ~ will try to optimized it latter
-
- DAY 9 --> solved more questions on array , trying to biuld logic
- ~ solved the question for product except self , used logic od prefix and suffix to do so
- ~ in a new array , saved the prefix product then used that new array to multiply the suffix product in the prefix nd found the output array
- ~ solving sort color used dutch national flag algorithm
- ~ divided the array in 3 section low.mid.high , moving low and mid and swapping mid with low if at mid there is a zero 
