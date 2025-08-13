@@ -1,4 +1,4 @@
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from langchain.embeddings import SentenceTransformerEmbeddings
 
 def get_retriever(persist_directory="rag_db"):
@@ -10,7 +10,14 @@ def get_retriever(persist_directory="rag_db"):
     return vectordb.as_retriever(search_kwargs={"k": 3})    # returns 3 most relevant chunks
 
 if __name__ == "__main__":
+    from vector_store import build_vector_store
+    print("Building vector store...")
+    build_vector_store(".")
+    print("Vector store built successfully!")
+    
+    # Now test the retriever
+    print("\nTesting retriever...")
     retriever = get_retriever()
-    results = retriever.get_relevant_documents("What is the purpose of this repo?")
+    results = retriever.invoke("What is the purpose of this repo?")
     for r in results:
         print(r.page_content[:200], "\n---")
