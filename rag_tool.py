@@ -12,11 +12,13 @@ def rag_tool(query: str, persist_directory: str = "rag_db", model: str = "gemini
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY not found. Add it to your .env or OS environment.")
 
+    # Set the environment variable that langchain-google-genai expects
+    os.environ["GOOGLE_API_KEY"] = api_key
+
     retriever = get_retriever(persist_directory)
     llm = ChatGoogleGenerativeAI(
         model=model, 
-        temperature=temperature,
-        google_api_key=api_key
+        temperature=temperature
     )
 
     qa_chain = RetrievalQA.from_chain_type(
