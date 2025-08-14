@@ -1,10 +1,10 @@
 import os
 from langchain.tools import Tool
-from langchain.prompts import PromptTemplate
 from langchain.agents import create_react_agent, AgentExecutor
 from langchain_google_genai import ChatGoogleGenerativeAI
 from rag_tool import rag_tool
 from dotenv import load_dotenv
+from langchain.prompts import PromptTemplate
 
 # Load environment variables
 load_dotenv()
@@ -21,12 +21,18 @@ rag_search_tool = Tool(
     description="Use this tool to search the document knowledge base and get relevant context for a user query."
 )
 
+llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0)
+
+# 4️⃣ Build the ReAct agent
+tools = [rag_search_tool]
 prompt = PromptTemplate.from_template("""
 You are an intelligent AI assistant with access to tools.
 Your job is to answer user questions accurately.
 
-You can use the following tools:
+You have access to the following tools:
 {tools}
+
+Tool names: {tool_names}
 
 Use the following format:
 Question: The input question you must answer
@@ -42,11 +48,6 @@ Begin!
 Question: {input}
 {agent_scratchpad}
 """)
-
-llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0)
-
-# 4️⃣ Build the ReAct agent
-tools = [rag_search_tool]
 agent = create_react_agent(llm=llm, tools=tools, prompt=prompt)
 
 # 5️⃣ Wrap in AgentExecutor
