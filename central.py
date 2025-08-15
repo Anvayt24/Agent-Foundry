@@ -20,3 +20,11 @@ def make_react_agent(prompt_template: str, tools: list, temp: float = 0, verbose
     prompt = PromptTemplate.from_template(prompt_template)
     agent = create_react_agent(llm=llm, tools=tools, prompt=prompt)
     return AgentExecutor(agent=agent, tools=tools, verbose=verbose)
+
+def llm_summarize_tool(name="Summarize", description="Summarize text succinctly."):
+    llm = make_llm(0)
+    return Tool(
+        name=name,
+        description=description,
+        func=lambda text: llm.invoke(f"Summarize clearly and briefly:\n\n{text}").content,
+    )
