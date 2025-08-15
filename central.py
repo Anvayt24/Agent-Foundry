@@ -1,6 +1,6 @@
 from langchain.tools import Tool
 from langchain.prompts import PromptTemplate
-from langchain.agents import create_react_agent, AgentExecutor
+from langchain.agents import initialize_agent, AgentType
 from langchain_google_genai import ChatGoogleGenerativeAI
 import os 
 from dotenv import load_dotenv
@@ -13,18 +13,25 @@ if not api_key:
 os.environ["GOOGLE_API_KEY"] = api_key
 
 def make_llm(temp: float = 0):
-    return ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=temp)
+    return ChatGoogleGenerativeAI(model="gemini-2.5-pro", temperature=temp)
 
-def make_react_agent(prompt_template: str, tools: list, temp: float = 0, verbose: bool = True) -> AgentExecutor:
-    llm = make_llm(temp)
-    
-    # Add missing required variables to the prompt template
-    if "{tools}" not in prompt_template:
-        prompt_template += "\n\nAvailable tools:\n{tools}\n\nTool names: {tool_names}"
-    
-    prompt = PromptTemplate.from_template(prompt_template)
-    agent = create_react_agent(llm=llm, tools=tools, prompt=prompt)
-    return AgentExecutor(agent=agent, tools=tools, verbose=verbose, handle_parsing_errors=True)
+def make_react_agent(tools: list, llm, system_prompt: str, temp: float = 0):
+    """
+    Creates a ReAct-style AgentExecutor with the given tools, LLM, and system prompt.
+    Always returns an AgentExecutor so .invoke() works.
+    """
+    prompt = PromptTemplate(
+        template=system_prompt,
+        input_variables=["input", "agent_scratchpad"]
+    )
+
+    return initialize_agent(
+        tools=tools,
+        llm=llm,
+        agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+        verbose=True,
+        handle_parsing_errors=True
+    )
 
 def llm_summarize_tool(name="Summarize", description="Summarize text succinctly."):
     llm = make_llm(0)

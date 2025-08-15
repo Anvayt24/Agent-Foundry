@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def rag_tool(query: str, persist_directory: str = "rag_db", model: str = "gemini-1.5-flash", temperature: float = 0.1) -> str:
+def rag_tool(query: str, persist_directory: str = "rag_db", model: str = "gemini-2.5-pro", temp: float = 0.1) -> str:
 
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
@@ -18,7 +18,7 @@ def rag_tool(query: str, persist_directory: str = "rag_db", model: str = "gemini
     retriever = get_retriever(persist_directory)
     llm = ChatGoogleGenerativeAI(
         model=model, 
-        temperature=temperature
+        temp=temp
     )
 
     qa_chain = RetrievalQA.from_chain_type(
