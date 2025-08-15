@@ -28,3 +28,6 @@ def llm_summarize_tool(name="Summarize", description="Summarize text succinctly.
         description=description,
         func=lambda text: llm.invoke(f"Summarize clearly and briefly:\n\n{text}").content,
     )
+
+def run_agent(agent_executor, input_text: str) -> str:
+    return agent_executor.invoke({"input": input_text})["output"]
