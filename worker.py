@@ -1,16 +1,23 @@
-from central import make_react_agent , Tool
-PLANNER_PROMPT = """
-You are the Planner. Break the user's objective into a minimal ordered list of atomic subtasks.
-Only output strict JSON with this schema:
-{"subtasks": ["step 1", "step 2", "..."]}
+# agents/worker.py
+from langchain.tools import Tool
+from .common import make_react_agent, llm_summarize_tool
+from rag_tool import rag_tool
 
-If a step needs retrieval from the knowledge base, include the word RAG in it.
-If a step is pure reasoning/summarization, include the word SUMMARIZE.
+WORKER_PROMPT = """
+You are the Worker. Execute the single subtask provided using available tools.
+Use tools when appropriate. Return ONLY the final result for this subtask.
 
-Question: {input}
+Subtask: {input}
 {agent_scratchpad}
 """
 
-# Planner uses no external tools—pure reasoning
-def create_planner():
-    return make_react_agent(prompt_template=PLANNER_PROMPT, tools=[])
+def create_worker():
+    tools = [
+        Tool(
+            name="RAG Search",
+            func=lambda q: rag_tool(q),
+            description="Query the document knowledge base and return relevant context/answers."
+        ),
+        llm_summarize_tool(),
+    ]
+    return make_react_agent(prompt_template=WORKER_PROMPT, tools=tools, temp=0)
