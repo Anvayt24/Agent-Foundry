@@ -1,6 +1,6 @@
 # agents/worker.py
 from langchain.tools import Tool
-from .common import make_react_agent, llm_summarize_tool
+from central import make_react_agent, llm_summarize_tool
 from rag_tool import rag_tool
 
 WORKER_PROMPT = """
