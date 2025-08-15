@@ -6,10 +6,8 @@ from rag_tool import rag_tool
 from dotenv import load_dotenv
 from langchain.prompts import PromptTemplate
 
-# Load environment variables
 load_dotenv()
 
-# Set up API key for langchain-google-genai
 api_key = os.getenv("GEMINI_API_KEY")
 if not api_key:
     raise RuntimeError("GEMINI_API_KEY not found. Add it to your .env file.")
@@ -23,7 +21,7 @@ rag_search_tool = Tool(
 
 llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0)
 
-# 4️⃣ Build the ReAct agent
+# ReAct agent
 tools = [rag_search_tool]
 prompt = PromptTemplate.from_template("""
 You are an intelligent AI assistant with access to tools.
@@ -50,7 +48,7 @@ Question: {input}
 """)
 agent = create_react_agent(llm=llm, tools=tools, prompt=prompt)
 
-# 5️⃣ Wrap in AgentExecutor
+# Wrap in AgentExecutor
 agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
 if __name__ == "__main__":
