@@ -13,13 +13,18 @@ if not api_key:
 os.environ["GOOGLE_API_KEY"] = api_key
 
 def make_llm(temp: float = 0):
-    return ChatGoogleGenerativeAI(model="gemini-pro", temperature=temp)
+    return ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=temp)
 
 def make_react_agent(prompt_template: str, tools: list, temp: float = 0, verbose: bool = True) -> AgentExecutor:
     llm = make_llm(temp)
+    
+    # Add missing required variables to the prompt template
+    if "{tools}" not in prompt_template:
+        prompt_template += "\n\nAvailable tools:\n{tools}\n\nTool names: {tool_names}"
+    
     prompt = PromptTemplate.from_template(prompt_template)
     agent = create_react_agent(llm=llm, tools=tools, prompt=prompt)
-    return AgentExecutor(agent=agent, tools=tools, verbose=verbose)
+    return AgentExecutor(agent=agent, tools=tools, verbose=verbose, handle_parsing_errors=True)
 
 def llm_summarize_tool(name="Summarize", description="Summarize text succinctly."):
     llm = make_llm(0)
@@ -30,4 +35,7 @@ def llm_summarize_tool(name="Summarize", description="Summarize text succinctly.
     )
 
 def run_agent(agent_executor, input_text: str) -> str:
-    return agent_executor.invoke({"input": input_text})["output"]
+    try:
+        return agent_executor.invoke({"input": input_text})["output"]
+    except Exception as e:
+        return f"Error running agent: {str(e)}"

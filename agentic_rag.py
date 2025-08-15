@@ -49,7 +49,7 @@ Question: {input}
 agent = create_react_agent(llm=llm, tools=tools, prompt=prompt)
 
 # Wrap in AgentExecutor
-agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parsing_errors=True)
 
 if __name__ == "__main__":
     print("\nAgentic RAG (Gemini) ready! Ask anything about your docs.\n")
