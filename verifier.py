@@ -1,22 +1,29 @@
-from central import make_react_agent, llm_summarize_tool
+from central import make_llm, make_react_agent
+from central import llm_summarize_tool  
 
-VERIFIER_PROMPT = """
-You are the Verifier. You receive multiple worker outputs.
-1) Check for consistency, missing pieces, and obvious errors.
-2) If needed, synthesize a concise final answer (cite snippets inline if present).
-Return a clean final answer.
-You MUST use the following format:
-Thought: ...
-Action: tool_name
-Action Input: ...
-Observation: ...
-Final Answer: ... 
+VERIFIER_SYSTEM_PROMPT = """
+You are the Verifier Agent.
+Your job is to check the combined worker outputs for correctness, completeness, and clarity.
+If errors or gaps are found, fix them in the final answer.
 
-Worker Outputs:
-{input}
-{agent_scratchpad}
+Always follow the ReAct format:
+
+Thought: reasoning
+Action: tool_name (if needed, else skip)
+Action Input: the input
+Observation: tool output
+Final Answer: the verified and corrected result
 """
 
 def create_verifier():
-    tools = [llm_summarize_tool(name="Condense", description="Condense multi-part results into a clean answer.")]
-    return make_react_agent(prompt_template=VERIFIER_PROMPT, tools=tools, temp=0)
+    tools = [
+        llm_summarize_tool(
+            name="Condense",
+            description="Condense and clean up multi-part results into a single coherent answer."
+        )
+    ]
+    return make_react_agent(
+        tools=tools,
+        llm=make_llm(temp=0),
+        system_prompt=VERIFIER_SYSTEM_PROMPT
+    )
