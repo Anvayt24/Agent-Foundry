@@ -1,23 +1,30 @@
-# agents/worker.py
 from langchain.tools import Tool
-from central import make_react_agent, llm_summarize_tool
+from central import make_llm, make_react_agent
 from rag_tool import rag_tool
 
-WORKER_PROMPT = """
-You are the Worker. Execute the single subtask provided using available tools.
-Use tools when appropriate. Return ONLY the final result for this subtask.
+WORKER_SYSTEM_PROMPT = """
+You are a Worker Agent.
+You execute the subtask assigned to you using the tools provided.
+Always follow the ReAct format:
 
-Subtask: {input}
-{agent_scratchpad}
+Thought: reasoning
+Action: tool_name
+Action Input: the input
+Observation: tool output
+Final Answer: the final completed subtask output
 """
 
 def create_worker():
-    tools = [
-        Tool(
-            name="RAG Search",
-            func=lambda q: rag_tool(q),
-            description="Query the document knowledge base and return relevant context/answers."
-        ),
-        llm_summarize_tool(),
-    ]
-    return make_react_agent(prompt_template=WORKER_PROMPT, tools=tools, temp=0)
+    # Create RAG tool wrapper
+    rag_tool_wrapper = Tool(
+        name="RAG_Search",
+        func=rag_tool,
+        description="Search the document knowledge base for relevant information"
+    )
+    
+    tools = [rag_tool_wrapper]
+    return make_react_agent(
+        tools=tools,
+        llm=make_llm(temp=0),
+        system_prompt=WORKER_SYSTEM_PROMPT
+    )
