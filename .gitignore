@@ -1,2 +1,2 @@
 .env
-_pycache
+__pycache__/
