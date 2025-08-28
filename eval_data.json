@@ -1,0 +1,26 @@
+[
+  {
+    "query": "Explain the two pointer technique in arrays",
+    "expected_tool": "explain_two_pointers"
+  },
+  {
+    "query": "How do i and j move in the two pointer method?",
+    "expected_tool": "rag_tool"
+  },
+  {
+    "query": "What is two pointers normally used for?",
+    "expected_tool": "rag_tool"
+  },
+  {
+    "query": "Can you explain two pointers in simple terms?",
+    "expected_tool": "explain_two_pointers"
+  },
+  {
+    "query": "how do we handle unsorted arrays with two pointers?",
+    "expected_tool": "explain_two_pointers"
+  },
+  {
+    "query": "retrieve the meaning two pointers?",
+    "expected": "rag_tool"
+  }
+]
