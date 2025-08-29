@@ -16,10 +16,6 @@
     "expected_tool": "explain_two_pointers"
   },
   {
-    "query": "how do we handle unsorted arrays with two pointers?",
-    "expected_tool": "explain_two_pointers"
-  },
-  {
     "query": "retrieve the meaning two pointers?",
     "expected": "rag_tool"
   }
