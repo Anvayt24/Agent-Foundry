@@ -1,7 +1,7 @@
 import json
 import requests  
-from worker import create_worker
-from verifier import create_verifier
+from agents.worker import create_worker
+from agents.verifier import create_verifier
 from central import run_agent
 
 LOG_FILE = "tool_output.json"
