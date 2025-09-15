@@ -19,7 +19,7 @@ rag_search_tool = Tool(
     description="Use this tool to search the document knowledge base and get relevant context for a user query."
 )
 
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro", temp=0)
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temp=0)
 
 # ReAct agent
 tools = [rag_search_tool]

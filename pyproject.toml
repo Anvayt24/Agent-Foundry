@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentfoundry"
+version = "0.1.0"
+description = "AgentFoundry: A developer-facing multi-agent Agentic RAG framework with MCP server integration"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Anvay", email = "anvatrive2324@gmail.com" }
+]
+requires-python = ">=3.9"
+
+dependencies = [
+    "langchain>=0.2.0",
+    "langchain-google-genai>=0.0.5",
+    "chromadb>=0.4.0",
+    "faiss-cpu>=1.7.4",
+    "sentence-transformers>=2.2.2",
+    "fastmcp>=0.0.5",
+    "python-dotenv>=1.0.0",
+    "pydantic>=2.0.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["agentfoundry*"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "black>=23.0",
+    "flake8>=6.0.0",
+]

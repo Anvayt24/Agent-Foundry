@@ -1,7 +1,7 @@
 from langchain.tools import Tool
 from central import make_llm, make_react_agent
-from rag_tool import rag_tool
-from mcp_tools_adapter import load_mcp_tools
+from RAG.rag_tool import rag_tool
+from MCP.mcp_tools_adapter import load_mcp_tools
 
 WORKER_SYSTEM_PROMPT = """
 You are a Worker Agent.
@@ -22,10 +22,10 @@ def create_worker():
         func=rag_tool,
         description="Search the document knowledge base for relevant information"
     )
+
+    tools = [rag_tool_wrapper]
     
     tools += load_mcp_tools()
-    
-    tools = [rag_tool_wrapper]
     return make_react_agent(
         tools=tools,
         llm=make_llm(temp=0),

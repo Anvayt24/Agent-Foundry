@@ -13,7 +13,7 @@ if not api_key:
 os.environ["GOOGLE_API_KEY"] = api_key
 
 def make_llm(temp: float = 0):
-    return ChatGoogleGenerativeAI(model="gemini-2.5-pro", temperature=temp)
+    return ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=temp)
 
 def make_react_agent(tools: list, llm, system_prompt: str, temp: float = 0):
     """

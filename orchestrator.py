@@ -1,7 +1,7 @@
 import json
-from planner import create_planner
-from worker import create_worker
-from verifier import create_verifier
+from agents.planner import create_planner
+from agents.worker import create_worker
+from agents.verifier import create_verifier
 from central import run_agent
 
 def orchestrate(user_request: str) -> str:

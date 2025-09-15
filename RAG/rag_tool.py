@@ -12,7 +12,7 @@ os.environ["GOOGLE_API_KEY"] = api_key
 
 # initializing retriver and llm once
 retriever = get_retriever("rag_db")  #persistent vector 
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro", temp=0.1)
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temp=0.1)
 
 qa_chain = RetrievalQA.from_chain_type(
     llm=llm,
@@ -30,5 +30,7 @@ except Exception:
     from langchain.tools import tool
 
 @tool("rag_answer", return_direct=False)
+
 def rag_answer_tool(query: str) -> str:
+    """Retrieve and generate an answer using RAG given a query and context."""
     return rag_tool(query)
