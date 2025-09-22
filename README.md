@@ -24,6 +24,7 @@ The goal is to provide a **minimal but extensible** framework for experimenting 
   - `save_file` → write generated output back to disk  
 - ✅ **Normal Orchestration** – central orchestrator coordinating Planner → Worker → Verifier.  
 - ✅ **Extensible** – easily add more tools (APIs, DBs, system commands) via MCP.  
+- ✅ **Agent-to-Agent Communication** – new A2A mode for direct agent communication via a shared MessageBus.  
 
 ---
 
@@ -32,10 +33,10 @@ The goal is to provide a **minimal but extensible** framework for experimenting 
 ✔️ **Phase 2:** Wrapped RAG into a LangChain Tool (`rag_answer_tool`).  
 ✔️ **Phase 3:** Multi-agent flow (Planner, Worker, Verifier) built with LangChain.  
 ✔️ **Phase 4:** MCP server added with **file ops tools** and integrated with Worker.  
+✔️ **Phase 5:** A2A communication mode implemented with MessageBus.  
 
 🔜 **Next planned improvements**:  
 - Add more MCP tools.
--  A2A (Agent-to-Agent) communication mode in v2  
 - Streamlit/CLI interface for developer interaction.  
 - Optional scaling with Ray Serve.  
 
@@ -63,6 +64,37 @@ The goal is to provide a **minimal but extensible** framework for experimenting 
 
 ---
 
+## 📂 Project Structure
+
+```text
+agentfoundry/
+├── MCP/
+│   ├── MCP_servers.py
+│   └── mcp_tools_adapter.py
+├── RAG/
+│   ├── agentic_rag.py
+│   ├── load_docs.py
+│   ├── retriever.py
+│   ├── rag_tool.py
+│   └── vector_store.py
+├── agents/
+│   ├── planner.py
+│   ├── worker.py
+│   └── verifier.py
+├── rag_db/
+├── central.py
+├── orchestrator.py
+├── messaging.py
+├── a2a_network.py
+├── requirements.txt
+├── pyproject.toml
+├── README.md
+├── .env
+├── .gitignore
+└── sample.txt
+```
+
+
 ## 🚀 Getting Started
 
 ### 1. Clone the Repository
@@ -81,13 +113,19 @@ pip install -r requirements.txt
 ### 3. Run MCP Server (Tools available on port 8000)
 
 ```bash
-python mcp_server.py
+python MCP/MCP_servers.py
 ```
 
 ### 4. Run the Orchestrator
 
 ```bash
 python orchestrator.py
+```
+
+### 5. Run the A2A Network
+
+```bash
+python a2a_network.py
 ```
 
 ---
@@ -101,6 +139,3 @@ AgentFoundry is developer-facing — contributions are welcome for:
 - Enhancing scalability & observability
 
 Feel free to open issues or submit pull requests!
-
-
-

@@ -1,6 +1,6 @@
 from langchain_chroma import Chroma
 from langchain_community.embeddings import SentenceTransformerEmbeddings
-from vector_store import build_vector_store
+from RAG.vector_store import build_vector_store
 
 def get_retriever(persist_directory="rag_db"):
     embeddings = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")

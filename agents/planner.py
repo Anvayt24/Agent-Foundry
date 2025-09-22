@@ -1,6 +1,8 @@
 from langchain.tools import Tool
 from central import make_llm, make_react_agent
 import json
+import time
+from messaging import MessageBus, Message, MessageType
 
 PLANNER_SYSTEM_PROMPT = """
 You are the Planner Agent. Your job is to break the user's objective into a minimal ordered list of atomic subtasks.
@@ -23,8 +25,86 @@ Observation: the planning result
 Final Answer: the final JSON plan
 """
 
+class PlannerA2A:
+    def __init__(self, message_bus: MessageBus):
+        self.message_bus = message_bus
+        self.message_bus.register_agent("Planner")
+        # Initialize result tracking
+        self.expected_results: int = 0
+        self.results: list[str] = []
+
+    def _plan_task(self, input_text: str) -> str:
+        llm = make_llm(temp=0)
+        prompt = f"""
+        Break down this objective into subtasks: {input_text}
+        
+        Return ONLY valid JSON in this format:
+        {{"subtasks": ["step 1", "step 2", "step 3"]}}
+        """
+        response = llm.invoke(prompt)
+        output = response.content if hasattr(response, "content") else response
+        output = output.strip()
+        if not output.startswith('{'):
+            start = output.find('{')
+            end = output.rfind('}') + 1
+            if start != -1 and end > start:
+                output = output[start:end]
+        try:
+            json.loads(output)
+            return output
+        except json.JSONDecodeError:
+            return json.dumps({
+                "subtasks": [
+                    f"Use RAG to search for information about: {input_text}",
+                    "SUMMARIZE the findings into a clear explanation"
+                ]
+            })
+
+    def create_subtasks(self, user_request: str) -> list:
+        plan_json = self._plan_task(user_request)
+        try:
+            plan = json.loads(plan_json)
+            return plan.get("subtasks", [user_request])
+        except Exception:
+            return [user_request]
+
+    def process_user_request(self, user_request: str):
+        subtasks = self.create_subtasks(user_request)
+        # Reset tracking counters for this user request
+        self.expected_results = len(subtasks)
+        self.results = []
+        for i, task in enumerate(subtasks, 1):
+            msg = Message(
+                sender="Planner",
+                recipient="Worker",
+                message_type=MessageType.TASK_REQUEST,
+                payload=task,
+                metadata={"task_id": f"task_{i}", "total": len(subtasks), "original_request": user_request},
+            )
+            self.message_bus.send(msg)
+
+def collect_results(self, max_wait_seconds: float = 1.0) -> str:
+        """Poll the message bus for TASK_RESULT messages until all expected
+        results are gathered or the timeout expires, then combine them.
+        """
+        deadline = time.time() + max_wait_seconds
+        while time.time() < deadline and len(self.results) < self.expected_results:
+            msg = self.message_bus.receive("Planner", timeout=0.05)
+            if not msg:
+                continue
+            if msg.message_type == MessageType.TASK_RESULT:
+                self.results.append(str(msg.payload))
+
+        if not self.results:
+            return ""
+
+        if len(self.results) == 1:
+            return self.results[0]
+
+        return "\n\n".join(self.results)
+
 def create_planner():
-    # Create a planning tool that handles JSON validation
+    """Orchestrator mode: return a LangChain ReAct planner agent (backward compatible)."""
     def plan_task(input_text: str) -> str:
         llm = make_llm(temp=0)
         prompt = f"""
@@ -33,41 +113,36 @@ def create_planner():
         Return ONLY valid JSON in this format:
         {{"subtasks": ["step 1", "step 2", "step 3"]}}
         """
-        
         response = llm.invoke(prompt)
         output = response.content if hasattr(response, "content") else response
         output = output.strip()
-        
-        # Try to clean up the response if it's not valid JSON
         if not output.startswith('{'):
             start = output.find('{')
             end = output.rfind('}') + 1
             if start != -1 and end > start:
                 output = output[start:end]
-        
-        # Validate JSON format
         try:
             json.loads(output)
             return output
         except json.JSONDecodeError:
-            # If JSON is invalid, create a simple fallback
             return json.dumps({
                 "subtasks": [
                     f"Use RAG to search for information about: {input_text}",
                     "SUMMARIZE the findings into a clear explanation"
                 ]
             })
-    
-    # Create planning tool
+
     planning_tool = Tool(
         name="plan_task",
         func=plan_task,
-        description="Break down user objectives into ordered subtasks and return as JSON"
+        description="Break down user objectives into ordered subtasks and return as JSON",
     )
-    
     tools = [planning_tool]
     return make_react_agent(
         tools=tools,
         llm=make_llm(temp=0),
-        system_prompt=PLANNER_SYSTEM_PROMPT
+        system_prompt=PLANNER_SYSTEM_PROMPT,
     )
+
+def create_planner_a2a(message_bus: MessageBus) -> PlannerA2A:
+    return PlannerA2A(message_bus)
