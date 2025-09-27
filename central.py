@@ -1,6 +1,6 @@
 from langchain.tools import Tool
-from langchain.prompts import PromptTemplate
-from langchain.agents import initialize_agent, AgentType
+from langchain.agents import AgentExecutor, create_react_agent
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_google_genai import ChatGoogleGenerativeAI
 import os 
 from dotenv import load_dotenv
@@ -20,17 +20,18 @@ def make_react_agent(tools: list, llm, system_prompt: str, temp: float = 0):
     Creates a ReAct-style AgentExecutor with the given tools, LLM, and system prompt.
     Always returns an AgentExecutor so .invoke() works.
     """
-    prompt = PromptTemplate(
-        template=system_prompt,
-        input_variables=["input", "agent_scratchpad"]
-    )
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", system_prompt),
+        ("human", "{input}"),
+        MessagesPlaceholder(variable_name="agent_scratchpad"),
+    ])
 
-    return initialize_agent(
+    agent = create_react_agent(llm=llm, tools=tools, prompt=prompt)
+    return AgentExecutor(
+        agent=agent,
         tools=tools,
-        llm=llm,
-        agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
         verbose=True,
-        handle_parsing_errors=True
+        handle_parsing_errors=True,
     )
 
 def llm_summarize_tool(name="Summarize", description="Summarize text succinctly."):
