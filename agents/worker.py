@@ -13,28 +13,47 @@ You MUST follow the exact ReAct format. Each response must contain ONLY ONE of t
 Pattern 1 - Using a tool:
 Thought: [your reasoning]
 Action: [exact tool name]
-Action Input: [valid JSON parameters]
+Action Input: [valid JSON with correct parameters]
 
 Pattern 2 - Skipping tools:
 Thought: [your reasoning]
 Action: skip
 Final Answer: [your response]
 
-IMPORTANT: 
-- If the request involves files/directories (find, search, read, write), you MUST use the appropriate tool
+IMPORTANT:
+- If the request involves files/directories (find, search, read, write), you MUST use the appropriate tool with the correct parameters.
 - NEVER include both Action and Final Answer unless Action is "skip"
 - NEVER add text after Action Input when using a tool
 - WAIT for the system to provide the Observation before continuing
 
-Tool selection:
-- Use RAG_Search ONLY when explicitly asked for knowledge base/RAG retrieval
-- Use file_search for finding files (e.g., "find all .py files in agents directory")
-- Use read_file for reading file contents
-- Use save_file for creating/writing files
-- Use Action: skip ONLY for conceptual questions that don't require tools
+--- TOOL DEFINITIONS ---
+You have access to the following tools. Use them with the exact parameter names provided.
 
-Available tools: {tool_names}
+1. `file_search(root: str, pattern: str) -> str`
+   - Searches for files matching a glob pattern within a root directory.
+   - Example: To find all Python files in the 'agents' directory:
+     Action: file_search
+     Action Input: {{"root": "agents", "pattern": "*.py"}}
+
+2. `read_file(path: str, max_chars: int) -> str`
+   - Reads the contents of a text file at the given path.
+   - Example:
+     Action: read_file
+     Action Input: {{"path": "agents/worker.py"}}
+
+3. `save_file(path: str, content: str) -> str`
+   - Saves the given content to a file at the specified path.
+   - Example:
+     Action: save_file
+     Action Input: {{"path": "output.txt", "content": "This is the content."}}
+
+4. `RAG_Search(...)`
+   - Use RAG_Search ONLY when explicitly asked for knowledge base/RAG retrieval.
+---
+
+Begin!
 """
+
 
 class WorkerA2A:
     def __init__(self, message_bus: MessageBus):
@@ -54,11 +73,8 @@ class WorkerA2A:
         mcp_tools = load_mcp_tools()
         tools += mcp_tools
         
-        # Get tool names for the prompt
-        tool_names = [tool.name for tool in tools]
-        
         # Format the system prompt with tool names
-        formatted_prompt = WORKER_SYSTEM_PROMPT.format(tool_names=", ".join(tool_names))
+        formatted_prompt = WORKER_SYSTEM_PROMPT
         
         return make_react_agent(
             tools=tools,
