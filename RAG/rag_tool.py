@@ -1,7 +1,7 @@
 import os
 from langchain.chains import RetrievalQA
 from langchain_google_genai import ChatGoogleGenerativeAI
-from retriever import get_retriever
+from RAG.retriever import get_retriever
 from dotenv import load_dotenv
 
 load_dotenv()

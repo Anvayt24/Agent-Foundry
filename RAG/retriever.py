@@ -1,9 +1,8 @@
 from langchain_chroma import Chroma
-from langchain_community.embeddings import SentenceTransformerEmbeddings
-from vector_store import build_vector_store
+from RAG.vector_store import build_vector_store, get_embeddings
 
 def get_retriever(persist_directory="rag_db"):
-    embeddings = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+    embeddings = get_embeddings()
     vectordb = Chroma(
         persist_directory=persist_directory,
         embedding_function=embeddings

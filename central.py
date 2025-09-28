@@ -1,6 +1,6 @@
 from langchain.tools import Tool
+from langchain.agents import AgentExecutor, create_react_agent
 from langchain.prompts import PromptTemplate
-from langchain.agents import initialize_agent, AgentType
 from langchain_google_genai import ChatGoogleGenerativeAI
 import os 
 from dotenv import load_dotenv
@@ -15,22 +15,27 @@ os.environ["GOOGLE_API_KEY"] = api_key
 def make_llm(temp: float = 0):
     return ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=temp)
 
-def make_react_agent(tools: list, llm, system_prompt: str, temp: float = 0):
-    """
-    Creates a ReAct-style AgentExecutor with the given tools, LLM, and system prompt.
-    Always returns an AgentExecutor so .invoke() works.
-    """
-    prompt = PromptTemplate(
-        template=system_prompt,
-        input_variables=["input", "agent_scratchpad"]
-    )
 
-    return initialize_agent(
+def make_react_agent(tools, llm, system_prompt, temp: float = 0):
+    template = (
+        f"{system_prompt}\n\n"
+        "You can use the following tools:\n{tools}\n\n"
+        "Tool names: {tool_names}\n\n"
+        "Question: {input}\n"
+        "{agent_scratchpad}"
+    )
+    prompt = PromptTemplate(
+        template=template,
+        input_variables=["input", "agent_scratchpad", "tools", "tool_names"],
+    )
+    agent = create_react_agent(llm=llm, tools=tools, prompt=prompt)
+    return AgentExecutor(
+        agent=agent,
         tools=tools,
-        llm=llm,
-        agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
         verbose=True,
-        handle_parsing_errors=True
+        handle_parsing_errors=True,
+        max_iterations=3,
+        early_stopping_method="generate",
     )
 
 def llm_summarize_tool(name="Summarize", description="Summarize text succinctly."):
@@ -43,6 +48,8 @@ def llm_summarize_tool(name="Summarize", description="Summarize text succinctly.
 
 def run_agent(agent_executor, input_text: str) -> str:
     try:
-        return agent_executor.invoke({"input": input_text})["output"]
+        return agent_executor.invoke({
+            "input": input_text
+        })["output"]
     except Exception as e:
         return f"Error running agent: {str(e)}"
