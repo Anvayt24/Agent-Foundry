@@ -11,11 +11,12 @@ IMPORTANT: You must respond with ONLY valid JSON in this exact format:
 {"subtasks": ["step 1", "step 2", "step 3"]}
 
 Rules:
-1. Output ONLY the JSON, no other text
-2. Use the exact format above with double quotes
-3. Each subtask should be a simple, actionable step
-4. If a step needs retrieval from knowledge base, include "RAG" in the task description
-5. If a step is pure reasoning/summarization, include "SUMMARIZE" in the task description
+1. Output ONLY the JSON, no other text.
+2. Use the exact format above with double quotes.
+3. Each subtask should be a simple, actionable step.
+4. Include "RAG" in a subtask ONLY when information is needed from the project knowledge base (docs, code, repo-specific context). Do NOT include RAG for general knowledge questions.
+5. Include "MCP" in a subtask ONLY for repository/file operations (e.g., search files, read_file, save_file).
+6. If the user request is a general conceptual question that can be answered directly, return a single subtask with the original question (no RAG, no MCP).
 
 Always follow the ReAct format:
 Thought: reasoning about how to break down the task
@@ -53,10 +54,10 @@ class PlannerA2A:
             json.loads(output)
             return output
         except json.JSONDecodeError:
+            # Fallback: avoid forcing RAG; let the Worker decide tool usage.
             return json.dumps({
                 "subtasks": [
-                    f"Use RAG to search for information about: {input_text}",
-                    "SUMMARIZE the findings into a clear explanation"
+                    f"{input_text}"
                 ]
             })
 
@@ -83,7 +84,7 @@ class PlannerA2A:
             )
             self.message_bus.send(msg)
 
-def collect_results(self, max_wait_seconds: float = 1.0) -> str:
+    def collect_results(self, max_wait_seconds: float = 1.0) -> str:
         """Poll the message bus for TASK_RESULT messages until all expected
         results are gathered or the timeout expires, then combine them.
         """
@@ -102,6 +103,7 @@ def collect_results(self, max_wait_seconds: float = 1.0) -> str:
             return self.results[0]
 
         return "\n\n".join(self.results)
+
 
 def create_planner():
     """Orchestrator mode: return a LangChain ReAct planner agent (backward compatible)."""
@@ -127,8 +129,7 @@ def create_planner():
         except json.JSONDecodeError:
             return json.dumps({
                 "subtasks": [
-                    f"Use RAG to search for information about: {input_text}",
-                    "SUMMARIZE the findings into a clear explanation"
+                    f"{input_text}"
                 ]
             })
 
