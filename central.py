@@ -35,7 +35,6 @@ def make_react_agent(tools, llm, system_prompt, temp: float = 0):
         verbose=True,
         handle_parsing_errors=True,
         max_iterations=3,
-        early_stopping_method="generate",
     )
 
 def llm_summarize_tool(name="Summarize", description="Summarize text succinctly."):

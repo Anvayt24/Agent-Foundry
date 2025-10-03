@@ -31,18 +31,21 @@ You have access to the following tools. Use them with the exact parameter names 
 
 1. `file_search(root: str, pattern: str) -> str`
    - Searches for files matching a glob pattern within a root directory.
+   - Parameters: root (directory to search), pattern (file pattern like "*.py")
    - Example: To find all Python files in the 'agents' directory:
      Action: file_search
      Action Input: {{"root": "agents", "pattern": "*.py"}}
 
 2. `read_file(path: str, max_chars: int) -> str`
    - Reads the contents of a text file at the given path.
+   - Parameters: path (file path), max_chars (optional, default 5000)
    - Example:
      Action: read_file
      Action Input: {{"path": "agents/worker.py"}}
 
 3. `save_file(path: str, content: str) -> str`
    - Saves the given content to a file at the specified path.
+   - Parameters: path (file path), content (text content)
    - Example:
      Action: save_file
      Action Input: {{"path": "output.txt", "content": "This is the content."}}
