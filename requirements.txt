@@ -12,3 +12,6 @@ langchain-chroma>=0.1.0
 # MCP integration
 langchain-mcp-adapters
 mcp
+
+# Memory
+mem0ai>=0.1.0

@@ -3,6 +3,7 @@ from central import make_llm, make_react_agent
 from RAG.rag_tool import rag_tool
 from MCP.mcp_tools_adapter import load_mcp_tools
 from messaging import MessageBus, Message, MessageType
+from memory.memory_manager import memory_manager
 
 WORKER_SYSTEM_PROMPT = """
 You are the Worker Agent. Execute subtasks using tools when needed or answer directly for general questions.
@@ -72,9 +73,24 @@ class WorkerA2A:
                 "task explicitly requires KB retrieval (mentions 'RAG' or needs doc context)."
             ),
         )
+        #memory tools
+        memory_tools = [
+            Tool(
+                name="add_memory",
+                func=lambda content, user_id="agent_system": memory_manager.add_memory(content, user_id),
+                description="Store information in shared memory. Input: content (str), user_id (str, optional)"
+            ),
+            Tool(
+                name="search_memories",
+                func=lambda query, user_id="agent_system", limit=5: memory_manager.search_memories(query, user_id, limit),
+                description="Search for relevant memories. Input: query (str), user_id (str, optional), limit (int, optional)"
+            )
+        ]
+        
+        # Combine all tools
         tools = [rag_tool_wrapper]
         mcp_tools = load_mcp_tools()
-        tools += mcp_tools
+        tools = tools + mcp_tools + memory_tools
         
         # Format the system prompt with tool names
         formatted_prompt = WORKER_SYSTEM_PROMPT
