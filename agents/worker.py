@@ -23,6 +23,7 @@ Final Answer: [your response]
 
 IMPORTANT:
 - If the request involves files/directories (find, search, read, write), you MUST use the appropriate tool with the correct parameters.
+- If the request involves memory, you MUST use the `add_memory` and `search_memories` tools with the correct parameters.
 - NEVER include both Action and Final Answer unless Action is "skip"
 - NEVER add text after Action Input when using a tool
 - WAIT for the system to provide the Observation before continuing
@@ -53,6 +54,21 @@ You have access to the following tools. Use them with the exact parameter names 
 
 4. `RAG_Search(...)`
    - Use RAG_Search ONLY when explicitly asked for knowledge base/RAG retrieval.
+
+5. `add_memory(content: str, user_id: str) -> None`
+   - Store information in shared memory.
+   - Parameters: content (str), user_id (str, optional)
+   - Example:
+     Action: add_memory
+     Action Input: {{"content": "This is memory content", "user_id": "worker"}}
+
+6. `search_memories(query: str, user_id: str, limit: int) -> List[str]`
+   - Search for relevant memories.
+   - Parameters: query (str), user_id (str, optional), limit (int, optional)
+   - Example:
+     Action: search_memories
+     Action Input: {{"query": "memory query", "user_id": "worker", "limit": 3}}
+
 ---
 
 Begin!

@@ -33,6 +33,13 @@ class MemoryManager:
                     "model": "sentence-transformers/all-MiniLM-L6-v2",
                 },
             },
+            "vector_store": {
+                "provider": "chroma",
+                "config": {
+                    "collection_name": "mem0_agentfoundry_384",
+                    "path": os.path.join(os.getcwd(), ".mem0_chroma"),
+                },
+            },
         }
 
         # Keep a flag to control inference depending on LLM availability
@@ -54,6 +61,8 @@ class MemoryManager:
 
     def search_memories(self, query: str, user_id: str = "agent_system", limit: int = 5):
         """Search stored memories for the user."""
+        if not query or not query.strip():
+            return []
         try:
             results = self.memory.search(query=query, user_id=user_id)
         except Exception as exc:
