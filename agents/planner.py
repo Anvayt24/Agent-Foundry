@@ -3,27 +3,29 @@ from central import make_llm, make_react_agent
 import json
 import time
 from messaging import MessageBus, Message, MessageType
-
+from memory.memory_manager import memory_manager
 PLANNER_SYSTEM_PROMPT = """
-You are the Planner Agent. Your job is to break the user's objective into a minimal ordered list of atomic subtasks.
+You are the Planner Agent. Your job is to create a plan with subtasks for the user's request.
 
-IMPORTANT: You must respond with ONLY valid JSON in this exact format:
-{"subtasks": ["step 1", "step 2", "step 3"]}
+You MUST end with "Final Answer:" followed by ONLY JSON in this format:
+{{"subtasks": ["step 1", "step 2", "step 3"]}}
 
-Rules:
-1. Output ONLY the JSON, no other text.
-2. Use the exact format above with double quotes.
-3. Each subtask should be a simple, actionable step.
-4. Include "RAG" in a subtask ONLY when information is needed from the project knowledge base (docs, code, repo-specific context). Do NOT include RAG for general knowledge questions.
-5. Include "MCP" in a subtask ONLY for repository/file operations (e.g., search files, read_file, save_file).
-6. If the user request is a general conceptual question that can be answered directly, return a single subtask with the original question (no RAG, no MCP).
+Available tools: search_memories, add_memory, plan_task
 
-Always follow the ReAct format:
-Thought: reasoning about how to break down the task
-Action: plan_task
-Action Input: the planning prompt
-Observation: the planning result
-Final Answer: the final JSON plan
+Workflow:
+1. If the request references past information, use search_memories
+2. Use plan_task if you need help generating subtasks
+3. ALWAYS end with "Final Answer:" and the JSON
+
+Use this format:
+Thought: [your reasoning]
+Action: [tool name]
+Action Input: [tool parameters]
+Observation: [tool result]
+... (repeat as needed)
+Final Answer: {{"subtasks": ["step 1", "step 2"]}}
+
+NEVER use "skip" or any other action. When you're ready to provide the plan, use "Final Answer:" with JSON.
 """
 
 class PlannerA2A:
@@ -33,14 +35,46 @@ class PlannerA2A:
         # Initialize result tracking
         self.expected_results: int = 0
         self.results: list[str] = []
+        # Initialize the agent
+        self.agent = self._create_planner_agent()
+
+    def _create_planner_agent(self):
+        """Create a minimal agent for planning tasks."""
+        planning_tool = Tool(
+            name="plan_task",
+            func=self._plan_task,
+            description="Break down objectives into subtasks. Input: task description (str)"
+        )
+
+        memory_tools = [
+            Tool(
+                name="add_memory",
+                func=lambda content, user_id="agent_system": memory_manager.add_memory(content, user_id),
+                description="Store information in shared memory. Input: content (str), user_id (str, optional)"
+            ),
+            Tool(
+                name="search_memories",
+                func=lambda query, user_id="agent_system", limit=5: memory_manager.search_memories(query, user_id, limit),
+                description="Search for relevant memories. Input: query (str), user_id (str, optional), limit (int, optional)"
+            )
+        ] 
+        
+        tools = [planning_tool] + memory_tools
+
+        return make_react_agent(
+            tools=tools,
+            llm=make_llm(temp=0),
+            system_prompt=PLANNER_SYSTEM_PROMPT
+        )
 
     def _plan_task(self, input_text: str) -> str:
+        """Plan task and return subtasks as JSON."""
         llm = make_llm(temp=0)
         prompt = f"""
         Break down this objective into subtasks: {input_text}
         
         Return ONLY valid JSON in this format:
-        {{"subtasks": ["step 1", "step 2", "step 3"]}}
+        {{"subtasks": ["step 1", "step 2"]}}
         """
         response = llm.invoke(prompt)
         output = response.content if hasattr(response, "content") else response
@@ -54,33 +88,37 @@ class PlannerA2A:
             json.loads(output)
             return output
         except json.JSONDecodeError:
-            # Fallback: avoid forcing RAG; let the Worker decide tool usage.
-            return json.dumps({
-                "subtasks": [
-                    f"{input_text}"
-                ]
-            })
-
+            return json.dumps({"subtasks": [input_text]})
+            
     def create_subtasks(self, user_request: str) -> list:
-        plan_json = self._plan_task(user_request)
+        """Create subtasks using the agent."""
         try:
-            plan = json.loads(plan_json)
-            return plan.get("subtasks", [user_request])
-        except Exception:
+            response = self.agent.invoke({"input": user_request})
+            plan = response.get("output") if isinstance(response, dict) else response
+            plan_data = json.loads(plan) if isinstance(plan, str) else plan
+            subtasks = plan_data.get("subtasks", [user_request]) if isinstance(plan_data, dict) else [user_request]
+            return subtasks
+        except Exception as e:
+            print(f"Error in create_subtasks: {e}")
             return [user_request]
-
+            
     def process_user_request(self, user_request: str):
+        """Process user request by creating and dispatching subtasks."""
         subtasks = self.create_subtasks(user_request)
-        # Reset tracking counters for this user request
         self.expected_results = len(subtasks)
         self.results = []
+        
         for i, task in enumerate(subtasks, 1):
             msg = Message(
                 sender="Planner",
                 recipient="Worker",
                 message_type=MessageType.TASK_REQUEST,
                 payload=task,
-                metadata={"task_id": f"task_{i}", "total": len(subtasks), "original_request": user_request},
+                metadata={
+                    "task_id": f"task_{i}", 
+                    "total": len(subtasks), 
+                    "original_request": user_request
+                },
             )
             self.message_bus.send(msg)
 
@@ -133,12 +171,26 @@ def create_planner():
                 ]
             })
 
+    memory_tools = [
+            Tool(
+                name="add_memory",
+                func=lambda content, user_id="agent_system": memory_manager.add_memory(content, user_id),
+                description="Store information in shared memory. Input: content (str), user_id (str, optional)"
+            ),
+            Tool(
+                name="search_memories",
+                func=lambda query, user_id="agent_system", limit=5: memory_manager.search_memories(query, user_id, limit),
+                description="Search for relevant memories. Input: query (str), user_id (str, optional), limit (int, optional)"
+            )
+        ]        
+
     planning_tool = Tool(
         name="plan_task",
         func=plan_task,
         description="Break down user objectives into ordered subtasks and return as JSON",
     )
     tools = [planning_tool]
+    tools = tools + memory_tools
     return make_react_agent(
         tools=tools,
         llm=make_llm(temp=0),
