@@ -4,6 +4,5 @@ __pycache__/
 
 /.mem0_chroma/
 /.rag_db/
+/src/agentfoundry.egg-info/
 /agentfoundry.egg-info/
-
-
