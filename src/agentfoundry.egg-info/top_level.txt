@@ -1,6 +1,0 @@
-MCP
-RAG
-agents
-config
-core
-memory
