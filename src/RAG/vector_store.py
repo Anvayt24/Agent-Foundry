@@ -1,3 +1,4 @@
+from config import RAG_DB_PATH
 from langchain_chroma import Chroma
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from RAG.load_docs import load_and_chunk_doc
@@ -14,8 +15,8 @@ def get_embeddings(model_name: str = "all-MiniLM-L6-v2") -> SentenceTransformerE
     return _EMBEDDINGS
 
 
-def build_vector_store(data_path: str, persist_directory="rag_db"):
-    persist_path = Path(persist_directory)
+def build_vector_store(data_path: str, persist_directory=None):
+    persist_path = Path(persist_directory or RAG_DB_PATH)
     embeddings = get_embeddings()
 
     if persist_path.exists() and any(persist_path.iterdir()):

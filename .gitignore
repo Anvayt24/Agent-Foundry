@@ -3,4 +3,7 @@ __pycache__/
 *.pyc
 
 /.mem0_chroma/
+/.rag_db/
+/agentfoundry.egg-info/
+
 

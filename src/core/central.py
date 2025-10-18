@@ -1,19 +1,13 @@
+from config import GEMINI_MODEL, ensure_google_key
 from langchain.tools import Tool
 from langchain.agents import AgentExecutor, create_react_agent
 from langchain.prompts import PromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
-import os 
-from dotenv import load_dotenv
 
-load_dotenv()
-
-api_key = os.getenv("GEMINI_API_KEY")
-if not api_key:
-    raise RuntimeError("GEMINI_API_KEY not found. Add it to your .env file.")
-os.environ["GOOGLE_API_KEY"] = api_key
+ensure_google_key()
 
 def make_llm(temp: float = 0):
-    return ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=temp)
+    return ChatGoogleGenerativeAI(model=GEMINI_MODEL, temperature=temp)
 
 
 def make_react_agent(tools, llm, system_prompt, temp: float = 0):

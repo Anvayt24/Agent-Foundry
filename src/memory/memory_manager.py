@@ -1,8 +1,5 @@
+from config import GEMINI_API_KEY, GEMINI_MODEL, MEM0_CHROMA_PATH, ensure_google_key
 from mem0 import Memory
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 
 class MemoryManager:
@@ -16,7 +13,8 @@ class MemoryManager:
 
     def initialize_memory(self):
         """Initialise Mem0 OSS memory with Gemini as the LLM."""
-        gemini_api_key = os.getenv("GEMINI_API_KEY")
+        ensure_google_key()
+        gemini_api_key = GEMINI_API_KEY
         if not gemini_api_key:
             raise ValueError("GEMINI_API_KEY not found. Add it to your .env file so Mem0 can call Gemini.")
 
@@ -24,7 +22,7 @@ class MemoryManager:
             "llm": {
                 "provider": "gemini",
                 "config": {
-                    "model": "gemini-2.5-flash",
+                    "model": GEMINI_MODEL,
                 },
             },
             "embedder": {
@@ -37,7 +35,7 @@ class MemoryManager:
                 "provider": "chroma",
                 "config": {
                     "collection_name": "mem0_agentfoundry_384",
-                    "path": os.path.join(os.getcwd(), ".mem0_chroma"),
+                    "path": str(MEM0_CHROMA_PATH),
                 },
             },
         }

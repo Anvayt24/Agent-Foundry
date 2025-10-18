@@ -1,76 +1,53 @@
 # 🚀 AgentFoundry  
-*A multi-agent Agentic RAG framework with MCP server integration*  
+*Forge, orchestrate, and extend intelligent multi-agent systems with RAG, MCP, and A2A communication.*  
+
+---
+## 🧠 What is AgentFoundry?
+
+AgentFoundry is a developer-first framework for building and experimenting with collaborative multi-agent systems. It provides a sandbox and a framework, giving developers both flexibility and power to:
+
+- Build domain-specific intelligent agents,
+- Connect them through **shared memory** and **A2A protocols**,
+- Integrate external capabilities using **MCP servers** and
+- Extend the system without rewriting the core.
+
+AgentFoundry is designed for researchers, ML engineers, and AI developers who want to move beyond single-agent pipelines and explore true agentic cooperation.
 
 ---
 
-## 📌 Overview  
-**AgentFoundry** is a developer-facing framework for building **multi-agent systems** that combine:  
-- **Agentic RAG (Retrieval-Augmented Generation with agents)** where agents   **plan, decide, and execute retrieval calls** instead of just stuffing context.  
-- **MCP (Model Context Protocol) tools** for interacting with external environments 
+## 🚀 Why AgentFoundry?
 
-The goal is to provide a **minimal but extensible** framework for experimenting with **Agentic RAG + MCP integration** — showing how agents can plan, retrieve, act, and validate.  
+AgentFoundry is designed for developers who want full control over their agentic systems. It provides a modular, transparent, and hackable framework that allows you to:
 
----
+- **Prototype your own AI orchestration logic**
+- **Plug in custom tools or APIs dynamically**
+- **Build domain-specific AI agents** (e.g., medical assistants, research copilots, or autonomous workflow bots)
+- **Experiment with A2A (Agent-to-Agent) collaboration and distributed reasoning**
+
+Each component in AgentFoundry is replaceable, extensible, and traceable. You have full control over the planning logic, message routing, RAG retrieval, and MCP-based tool integration. This means you can easily customize and experiment with different architectures and use cases.
 
 ## 🎯 Key Features
-- ✅ **Planner Agent** – breaks down complex tasks into subtasks.  
-- ✅ **Worker Agents** – execute subtasks using **RAG** and **MCP tools**.  
-- ✅ **Verifier Agent** – validates outputs for correctness.  
-- ✅ **Agentic RAG Integration** – dynamic retrieval via agents (Planner & Worker use RAG tool only when needed).
-- ✅ **MCP Server Integration** – enables external tools 
-- ✅ **Normal Orchestration** – central orchestrator coordinating Planner → Worker → Verifier.  
-- ✅ **Extensible** – easily add more tools (APIs, DBs, system commands) via MCP.  
-- ✅ **Agent-to-Agent (A2A) Communication** – direct agent communication via shared MessageBus with:
-  - **Asynchronous message passing** between agents
-  - **Cooperative task execution** with idle detection
-  - **Tool-aware agents** that can use MCP and RAG tools dynamically
-  - **Real-time interaction** with live user input
-  - **Error handling** with timeouts and idle detection
-  - **Message Bus** for efficient inter-agent communication
+
+- **Planner Agent**: Breaks down complex tasks into subtasks.
+- **Worker Agents**: Execute the subtasks.
+- **Verifier Agent**: Validates outputs for correctness.
+- **RAG Integration**: Dynamic retrieval via agents.
+- **MCP Server Integration**: Enables external tools.
+- **Memory Layer**: Central memory module managing shared state and data access across agents.
+- **Extensibility**: Easily add more tools (APIs, DBs, system commands) via MCP.
+- **Centralized or Decentralized control**: Choose between a central orchestrator or decentralized A2A communication between agents.
+
 
 ---
 
-## 🏗️ Current Status  
-✔️ **Phase 1:** RAG pipeline working (retriever + Gemini LLM).  
-✔️ **Phase 2:** Wrapped RAG into a LangChain Tool (`rag_answer_tool`).  
-✔️ **Phase 3:** Multi-agent flow (Planner, Worker, Verifier) built with LangChain.  
-✔️ **Phase 4:** MCP server added with tools and integrated with Worker.  
-✔️ **Phase 5:** A2A communication mode implemented with MessageBus.  
-
-🔜 **Next planned improvements**:  
-- Add more MCP tools.
-- Streamlit/CLI interface for developer interaction.  
-- Optional scaling with Ray Serve.  
-
----
-
-### Agent Flow :  
-
-#### Traditional Orchestrator Mode:
-1. **Planner**: Breaks into subtasks → (search, read, summarize). Decides that **retrieval from knowledge base may be needed** for context.  
-2. **Worker**:  
-   - Calls MCP `file_search("*.md")`  
-   - Calls MCP `read_file("README.md")`  
-   - Dynamically decides to call the **`rag_answer_tool`** to fetch additional context from the vector store.  
-   - Combines retrieved knowledge + file content and summarizes using LLM.  
-3. **Verifier**: Checks that the retrieved knowledge and summary are consistent and accurate.  
-4. **Final Output**: A validated, knowledge-grounded summary of README.md.
-
-#### A2A Network Mode:
+### Agent Flow (general):  
 1. **User Input**: Direct command via interactive CLI
-2. **Planner Agent**: Analyzes request and creates task plan
-3. **Message Bus**: Distributes subtasks to Worker agent
-4. **Worker Agent**: Executes tasks using available tools:
-   - **MCP Tools**: `file_search`, `read_file`, `save_file`
+2. **Planner**: Analyzes request and creates task plan
+3. **Worker**: Executes tasks using available tools:
+   - **MCP Tools**: `file_search`, `read_file`, `save_file`(mock tools present in this repo)
    - **RAG Tool**: Knowledge base retrieval when needed
-5. **Verifier Agent**: Validates and refines outputs
-6. **Real-time Response**: Live feedback and results to user
-
-**A2A Advantages:**
-- **Interactive Development**: Test agent capabilities in real-time
-- **Tool Discovery**: Agents dynamically select appropriate tools
-- **Error Recovery**: Graceful handling of tool failures and network issues
-- **Extensible**: Easy to add new agents and tools to the network 
+4. **Verifier**: Validates and refines outputs
+5. **Real-time Response**: Live feedback and results to user
 
 ---
 
@@ -81,6 +58,7 @@ The goal is to provide a **minimal but extensible** framework for experimenting 
 - **Chroma / FAISS** – vector store for RAG  
 - **FastMCP** – lightweight MCP server  
 - **MCP Toolkit for LangChain** – dynamic tool integration  
+- **Mem0** - memory layer for agents
 
 ---
 
@@ -88,30 +66,36 @@ The goal is to provide a **minimal but extensible** framework for experimenting 
 
 ```text
 agentfoundry/
-├── MCP/
-│   ├── MCP_servers.py
-│   └── mcp_tools_adapter.py
-├── RAG/
-│   ├── agentic_rag.py
-│   ├── load_docs.py
-│   ├── retriever.py
-│   ├── rag_tool.py
-│   └── vector_store.py
-├── agents/
-│   ├── planner.py
-│   ├── worker.py
-│   └── verifier.py
+├── scripts/
+│   ├── a2a_network.py
+│   └── orchestrator.py
+├── src/
+│   ├── agents/
+│   │   ├── planner.py
+│   │   ├── worker.py
+│   │   └── verifier.py
+│   ├── core/
+│   │   ├── central.py
+│   │   └── messaging.py
+│   ├── RAG/
+│   │   ├── load_docs.py
+│   │   ├── retriever.py
+│   │   ├── rag_tool.py
+│   │   └── vector_store.py
+│   ├── MCP/
+│   │   ├── MCP_servers.py
+│   │   └── mcp_tools_adapter.py
+│   ├── memory/
+│   │   └── memory_manager.py
+│   └── config/
+│       ├── __init__.py
+│       └── settings.py
 ├── rag_db/
-├── central.py
-├── orchestrator.py
-├── messaging.py
-├── a2a_network.py
-├── requirements.txt
 ├── pyproject.toml
 ├── README.md
 ├── .env
 ├── .gitignore
-└── sample.txt
+└── requirements.txt
 ```
 
 
@@ -124,36 +108,38 @@ git clone https://github.com/your-username/AgentFoundry.git
 cd AgentFoundry
 ```
 
-### 2. Install Dependencies
+### 2. Install (editable)
 
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```
 
-### 3. Run MCP Server (Tools available on port 8000/stdio)
+### 3. Run MCP Server (only when running over a different port)
 
 ```bash
-python MCP/MCP_servers.py
+python -m MCP.MCP_servers
 ```
 
 ### 4. Run the Orchestrator
 
 ```bash
-python orchestrator.py
+python scripts/orchestrator.py
 ```
+**OR**
 
 ### 5. Run the A2A Network
 
 ```bash
-python a2a_network.py
+python scripts/a2a_network.py
 ```
+
+### Environment Setup
+- **.env**: define `GOOGLE_API_KEY` or `GEMINI_API_KEY`, plus any other provider keys you enable.
+- **Paths**: override `RAG_DB_PATH` (defaults to `rag_db/`) and `MEM0_CHROMA_PATH` (defaults to `.mem0_chroma/`) if you want custom storage locations.
+- **MCP transport**: switch from the default `stdio` by setting `MCP_TRANSPORT`, `MCP_SERVER_HOST`, and `MCP_SERVER_PORT`.
 
 ## 🤝 Contribution
 
-AgentFoundry is developer-facing — contributions are welcome for:
-
-- Adding new MCP tools
-- A2A communication 
-- Enhancing scalability & observability
+AgentFoundry is developer-facing — contributions are welcome
 
 Feel free to open issues or submit pull requests!

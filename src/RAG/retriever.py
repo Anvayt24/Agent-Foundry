@@ -1,10 +1,12 @@
+from config import RAG_DB_PATH
 from langchain_chroma import Chroma
 from RAG.vector_store import build_vector_store, get_embeddings
 
-def get_retriever(persist_directory="rag_db"):
+def get_retriever(persist_directory=None):
+    directory = str(persist_directory or RAG_DB_PATH)
     embeddings = get_embeddings()
     vectordb = Chroma(
-        persist_directory=persist_directory,
+        persist_directory=directory,
         embedding_function=embeddings
     )
     return vectordb.as_retriever(

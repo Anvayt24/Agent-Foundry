@@ -1,17 +1,11 @@
-import os
+from config import GEMINI_MODEL, ensure_google_key
 from langchain.tools import Tool
 from langchain.agents import create_react_agent, AgentExecutor
 from langchain_google_genai import ChatGoogleGenerativeAI
-from rag_tool import rag_tool
-from dotenv import load_dotenv
 from langchain.prompts import PromptTemplate
+from RAG.rag_tool import rag_tool
 
-load_dotenv()
-
-api_key = os.getenv("GEMINI_API_KEY")
-if not api_key:
-    raise RuntimeError("GEMINI_API_KEY not found. Add it to your .env file.")
-os.environ["GOOGLE_API_KEY"] = api_key
+ensure_google_key()
 
 rag_search_tool = Tool(
     name="RAG Search",
@@ -19,7 +13,7 @@ rag_search_tool = Tool(
     description="Use this tool to search the document knowledge base and get relevant context for a user query."
 )
 
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temp=0)
+llm = ChatGoogleGenerativeAI(model=GEMINI_MODEL, temp=0)
 
 # ReAct agent
 tools = [rag_search_tool]

@@ -1,18 +1,13 @@
-import os
+from config import GEMINI_MODEL, RAG_DB_PATH, ensure_google_key
 from langchain.chains import RetrievalQA
 from langchain_google_genai import ChatGoogleGenerativeAI
 from RAG.retriever import get_retriever
-from dotenv import load_dotenv
 
-load_dotenv()
-api_key = os.getenv("GEMINI_API_KEY")
-if not api_key:
-    raise RuntimeError("GEMINI_API_KEY not found. Add it to your .env or OS environment.")
-os.environ["GOOGLE_API_KEY"] = api_key
+ensure_google_key()
 
 # initializing retriver and llm once
-retriever = get_retriever("rag_db")  #persistent vector 
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temp=0.1)
+retriever = get_retriever(str(RAG_DB_PATH))
+llm = ChatGoogleGenerativeAI(model=GEMINI_MODEL, temp=0.1)
 
 qa_chain = RetrievalQA.from_chain_type(
     llm=llm,

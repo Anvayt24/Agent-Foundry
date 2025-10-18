@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "agentfoundry"
 version = "0.1.0"
-description = "AgentFoundry: A developer-facing multi-agent Agentic RAG framework with MCP server integration"
+description = "AgentFoundry: A developer-facing multi-agent RAG framework with MCP server integration"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [
@@ -24,9 +24,12 @@ dependencies = [
     "pydantic>=2.0.0",
 ]
 
+[tool.setuptools]
+package-dir = {"" = "src"}
+
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["agentfoundry*"]
+where = ["src"]
+include = ["*"]
 
 [project.optional-dependencies]
 dev = [
