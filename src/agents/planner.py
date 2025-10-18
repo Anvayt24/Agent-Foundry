@@ -39,6 +39,7 @@ class PlannerA2A:
         # Initialize result tracking
         self.expected_results: int = 0
         self.results: list[str] = []
+        self.active_session_id: str | None = None
 
     def create_subtasks(self, user_request: str) -> list:
         """Create subtasks using the agent."""
@@ -53,11 +54,12 @@ class PlannerA2A:
             print(f"Error in create_subtasks: {e}")
             return [user_request]
             
-    def process_user_request(self, user_request: str):
+    def process_user_request(self, user_request: str, session_id: str | None = None):
         """Process user request by creating and dispatching subtasks."""
         subtasks = self.create_subtasks(user_request)
         self.expected_results = len(subtasks)
         self.results = []
+        self.active_session_id = session_id
         
         for i, task in enumerate(subtasks, 1):
             msg = Message(
@@ -68,21 +70,26 @@ class PlannerA2A:
                 metadata={
                     "task_id": f"task_{i}", 
                     "total": len(subtasks), 
-                    "original_request": user_request
+                    "original_request": user_request,
+                    "session_id": session_id,
                 },
             )
             self.message_bus.send(msg)
 
-    def collect_results(self, max_wait_seconds: float = 1.0) -> str:
+    def collect_results(self, session_id: str | None = None, max_wait_seconds: float = 1.0) -> str:
         """Poll the message bus for TASK_RESULT messages until all expected
         results are gathered or the timeout expires, then combine them.
         """
+        target_session = session_id if session_id is not None else self.active_session_id
         deadline = time.time() + max_wait_seconds
         while time.time() < deadline and len(self.results) < self.expected_results:
             msg = self.message_bus.receive("Planner", timeout=0.05)
             if not msg:
                 continue
             if msg.message_type == MessageType.TASK_RESULT:
+                msg_session = (msg.metadata or {}).get("session_id")
+                if target_session and msg_session != target_session:
+                    continue
                 self.results.append(str(msg.payload))
 
         if not self.results:

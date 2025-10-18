@@ -16,6 +16,7 @@ Observation: tool output
 Final Answer: the verified and corrected result
 
 When no tool is needed, do NOT output an Action step. Go directly from Thought to Final Answer.
+If the worker's response is already correct, repeat or lightly improve that content in your Final Answer—never respond with a bare acknowledgement such as "Okay" or "Noted".
 """
 
 class VerifierA2A:
@@ -24,10 +25,15 @@ class VerifierA2A:
         self.message_bus.register_agent("Verifier")
         self.agent_executor = create_verifier()
 
-    def process_once(self, timeout: float = 0.2) -> bool:
+    def process_once(self, session_id: str | None = None, timeout: float = 0.2) -> bool:
         msg = self.message_bus.receive("Verifier", timeout=timeout)
         if not msg:
             return False
+        if session_id is not None:
+            msg_session = (msg.metadata or {}).get("session_id")
+            if msg_session != session_id:
+                # Drop stale message belonging to a different session
+                return False
         if msg.message_type == MessageType.TASK_RESPONSE:
             try:
                 agent_response = self.agent_executor.invoke({"input": str(msg.payload)})
@@ -35,12 +41,16 @@ class VerifierA2A:
                 verified = f"Verification error: {exc}\n\n{msg.payload}"
             else:
                 verified = agent_response.get("output") if isinstance(agent_response, dict) else str(agent_response)
+            original_metadata = msg.metadata or {}
             out = Message(
                 sender="Verifier",
                 recipient="Planner",
                 message_type=MessageType.TASK_RESULT,
                 payload=verified,
-                metadata={"from_task_id": (msg.metadata or {}).get("task_id")},
+                metadata={
+                    "from_task_id": original_metadata.get("task_id"),
+                    "session_id": original_metadata.get("session_id", session_id),
+                },
             )
             self.message_bus.send(out)
         return True

@@ -96,18 +96,27 @@ class WorkerA2A:
             else:
                 return f"Worker error: {e}"
 
-    def process_once(self, timeout: float = 0.2) -> bool:
+    def process_once(self, session_id: str | None = None, timeout: float = 0.2) -> bool:
         msg = self.message_bus.receive("Worker", timeout=timeout)
         if not msg:
             return False
+        if session_id is not None:
+            msg_session = (msg.metadata or {}).get("session_id")
+            if msg_session != session_id:
+                # Drop stale message belonging to a different session
+                return False
         if msg.message_type == MessageType.TASK_REQUEST:
             result = self.perform_task(msg.payload)
+            original_metadata = msg.metadata or {}
             resp = Message(
                 sender="Worker",
                 recipient="Verifier",
                 message_type=MessageType.TASK_RESPONSE,
                 payload=result,
-                metadata={"task_id": (msg.metadata or {}).get("task_id")},
+                metadata={
+                    "task_id": original_metadata.get("task_id"),
+                    "session_id": original_metadata.get("session_id", session_id),
+                },
             )
             self.message_bus.send(resp)
         return True
