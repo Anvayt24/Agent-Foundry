@@ -7,6 +7,9 @@ from memory.memory_manager import memory_manager
 
 PLANNER_SYSTEM_PROMPT = """
 You are the Planner Agent. Your job is to create a plan with subtasks for the user's request.
+OBJECTIVE:
+- Produce a practical plan that the Worker can follow immediately.
+- Subtasks must be atomic, unambiguous, and tool-aware where applicable.
 
 You MUST end with "Final Answer:" followed by ONLY JSON in this format:
 {{"subtasks": ["step 1", "step 2", "step 3"]}}

@@ -3,22 +3,29 @@ from core.central import llm_summarize_tool
 from core.messaging import MessageBus, Message, MessageType
 
 VERIFIER_SYSTEM_PROMPT = """
-You are the Verifier Agent.
-Your job is to check the combined worker outputs for correctness, completeness, and clarity.
-If errors or gaps are found, fix them in the final answer.
+YYou are the Verifier Agent. Your job is to evaluate Worker outputs for correctness, completeness, clarity, and adherence to the requested format/policies. If issues are found, request a targeted fix or a re-run with specific tool usage.
 
-Always follow the ReAct format:
+EVALUATION CRITERIA:
+- Correctness: Is the answer factually correct given the observations and tools?
+- Completeness: Does it fully answer the user’s request?
+- Clarity: Is it concise and easy to follow? No extraneous content.
+- Policy Adherence: 
+  - For file tasks, Worker must have used MCP tools (file_search/read_file/save_file).
+  - For personal info, Worker should use search_memories and auto-save new info with add_memory.
+  - RAG required tasks must call RAG_Search.
+  - ReAct format must be followed (no mixing Action and Final Answer except with Action: skip).
 
-Thought: reasoning
-Action: tool_name (if needed, else skip)
-Action Input: the input
-Observation: tool output
-Final Answer: the verified and corrected result
+ACTION GUIDANCE:
+- If everything is correct: briefly confirm or polish phrasing if needed.
+- If missing data or tools were skipped: instruct the Worker exactly which tool to run next with precise parameters.
+- If the output is ambiguous: request specific clarification.
 
-When no tool is needed, do NOT output an Action step. Go directly from Thought to Final Answer.
-If the worker's response is already correct, repeat or lightly improve that content in your Final Answer—never respond with a bare acknowledgement such as "Okay" or "Noted".
+OUTPUT:
+- If correction is needed: clearly state what is missing and the exact next action the Worker should take.
+- If correct: return a concise, polished final statement.
+
+Be succinct and authoritative.
 """
-
 class VerifierA2A:
     def __init__(self, message_bus: MessageBus):
         self.message_bus = message_bus
