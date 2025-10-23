@@ -21,8 +21,8 @@ class A2ANetwork:
 
         # Simple cooperative pump loop
         idle_rounds = 0
-        max_idle_rounds = 10
-        end_time = time.time() + 10.0  # hard cap to avoid runaway loops
+        max_idle_rounds = 5
+        end_time = time.time() + 30.0  # hard cap to avoid runaway loops
         while time.time() < end_time and idle_rounds < max_idle_rounds:
             progressed = False
             progressed |= self.worker.process_once(session_id=session_id, timeout=0.1)

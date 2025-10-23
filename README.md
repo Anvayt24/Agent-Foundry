@@ -138,6 +138,10 @@ python scripts/a2a_network.py
 - **Paths**: override `RAG_DB_PATH` (defaults to `rag_db/`) and `MEM0_CHROMA_PATH` (defaults to `.mem0_chroma/`) if you want custom storage locations.
 - **MCP transport**: switch from the default `stdio` by setting `MCP_TRANSPORT`, `MCP_SERVER_HOST`, and `MCP_SERVER_PORT`.
 
+## 📘 Usage Examples
+
+See `USAGE.md` for concise terminal transcripts (orchestrator, A2A) and quick tuning tips.
+
 ## 🤝 Contribution
 
 AgentFoundry is developer-facing — contributions are welcome

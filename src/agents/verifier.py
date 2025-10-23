@@ -3,28 +3,36 @@ from core.central import llm_summarize_tool
 from core.messaging import MessageBus, Message, MessageType
 
 VERIFIER_SYSTEM_PROMPT = """
-YYou are the Verifier Agent. Your job is to evaluate Worker outputs for correctness, completeness, clarity, and adherence to the requested format/policies. If issues are found, request a targeted fix or a re-run with specific tool usage.
+You are the Verifier Agent. Evaluate the Worker’s output for correctness, completeness, clarity, and adherence to expected practices. Produce a concise, authoritative final statement.
 
-EVALUATION CRITERIA:
-- Correctness: Is the answer factually correct given the observations and tools?
-- Completeness: Does it fully answer the user’s request?
-- Clarity: Is it concise and easy to follow? No extraneous content.
-- Policy Adherence: 
-  - For file tasks, Worker must have used MCP tools (file_search/read_file/save_file).
-  - For personal info, Worker should use search_memories and auto-save new info with add_memory.
-  - RAG required tasks must call RAG_Search.
-  - ReAct format must be followed (no mixing Action and Final Answer except with Action: skip).
+EVALUATION CRITERIA
+- Correctness: Is the content factually sound and consistent with the task?
+- Completeness: Does it fully address the user’s request without gaps?
+- Clarity: Is it succinct, well-structured, and free of fluff or contradictions?
+- Process expectations:
+  - File tasks should leverage MCP tools (file_search, read_file, save_file) when evidence or I/O is required.
+  - Personal info/preferences should reference search_memories; durable facts should be saved with add_memory.
+  - Knowledge/documentation tasks may need RAG_Search.
+  - ReAct format: Either use Thought→Action→Action Input→Observation loops or provide a direct Final Answer when no tool is needed. Do not reference any “skip” action.
 
-ACTION GUIDANCE:
-- If everything is correct: briefly confirm or polish phrasing if needed.
-- If missing data or tools were skipped: instruct the Worker exactly which tool to run next with precise parameters.
-- If the output is ambiguous: request specific clarification.
+FORMAT (ReAct)
+- For tool use (rare; only Condense):
+  Thought: [why polishing is needed]
+  Action: Condense
+  Action Input: [the text to condense]
+  Observation: [result]
+  Final Answer: [polished statement]
+- For direct evaluation (most cases):
+  Thought: [brief evaluation]
+  Final Answer: [polished final statement or precise next action for the Worker]
 
-OUTPUT:
-- If correction is needed: clearly state what is missing and the exact next action the Worker should take.
-- If correct: return a concise, polished final statement.
+TOOL USAGE (Condense)
+- Use the Condense tool to merge, clean, or tighten the Worker’s output when it is correct but verbose or fragmented.
+- for the answers coming from RAG_search always provide a summary of the workers output.
 
-Be succinct and authoritative.
+OUTPUT
+- If correct: provide a polished final statement (you may call Condense first).
+- If issues exist: state what is missing and the exact next action recommended (e.g., which tool and parameters). Be specific and brief.
 """
 class VerifierA2A:
     def __init__(self, message_bus: MessageBus):
@@ -42,12 +50,18 @@ class VerifierA2A:
                 # Drop stale message belonging to a different session
                 return False
         if msg.message_type == MessageType.TASK_RESPONSE:
-            try:
-                agent_response = self.agent_executor.invoke({"input": str(msg.payload)})
-            except Exception as exc:
-                verified = f"Verification error: {exc}\n\n{msg.payload}"
+            payload_str = str(msg.payload)
+            
+            # Check if Worker returned an error message
+            if "Worker error:" in payload_str or "Agent format error:" in payload_str or "Agent parsing error:" in payload_str:
+                verified = f"Worker failed to complete the task. Error: {payload_str}"
             else:
-                verified = agent_response.get("output") if isinstance(agent_response, dict) else str(agent_response)
+                try:
+                    agent_response = self.agent_executor.invoke({"input": payload_str})
+                except Exception as exc:
+                    verified = f"Verification error: {exc}\n\nOriginal Worker output: {payload_str}"
+                else:
+                    verified = agent_response.get("output") if isinstance(agent_response, dict) else str(agent_response)
             original_metadata = msg.metadata or {}
             out = Message(
                 sender="Verifier",

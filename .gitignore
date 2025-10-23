@@ -6,3 +6,6 @@ __pycache__/
 /.rag_db/
 /src/agentfoundry.egg-info/
 /agentfoundry.egg-info/
+/rag_db/
+
+
