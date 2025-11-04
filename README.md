@@ -141,6 +141,7 @@ python scripts/a2a_network.py
 ## 📘 Usage Examples
 
 See `USAGE.md` for concise terminal transcripts (orchestrator, A2A) and quick tuning tips.
+Also read the documentation in `scripts` directory to know more about agent coummunication.
 
 ## 🤝 Contribution
 
