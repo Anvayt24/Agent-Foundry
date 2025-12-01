@@ -38,6 +38,29 @@ Each component in AgentFoundry is replaceable, extensible, and traceable. You ha
 - **Centralized or Decentralized control**: Choose between a central orchestrator or decentralized A2A communication between agents.
 
 
+## 🦙 Local Model Support (Ollama)
+
+AgentFoundry supports local quantized models via [Ollama](https://ollama.com). This allows you to run agents entirely locally with zero inference cost.
+
+### Prerequisites
+1. Install Ollama: https://ollama.com/download
+2. Pull recommended models:
+   ```bash
+   ollama pull llama3.2:1b
+   ollama pull llama3.2:3b
+   ```
+
+### Configuration
+Update your `.env` file:
+```bash
+MODEL_BACKEND=ollama
+PLANNER_MODEL=llama3.2:1b-instruct-q8_0
+WORKER_MODEL=llama3.2:3b-instruct-q4_0
+VERIFIER_MODEL=llama3.2:1b-instruct-q8_0
+```
+
+See [FINE_TUNING.md](FINE_TUNING.md) for details on creating specialized fine-tuned models.
+
 ---
 
 ### Agent Flow (general):  

@@ -1,5 +1,5 @@
 from langchain.tools import Tool
-from core.central import make_llm, make_react_agent
+from core.central import make_llm, make_react_agent, make_worker_llm
 from RAG.rag_tool import rag_tool
 from MCP.mcp_tools_adapter import load_mcp_tools
 from core.messaging import MessageBus, Message, MessageType
@@ -124,7 +124,7 @@ def create_worker():
     
     return make_react_agent(
         tools=tools,
-        llm=make_llm(temp=0.0),  # Lower temperature for more consistent output
+        llm=make_worker_llm(temp=0.0),  # Lower temperature for more consistent output
         system_prompt=WORKER_SYSTEM_PROMPT,
     )
 

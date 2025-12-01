@@ -37,3 +37,16 @@ dev = [
     "black>=23.0",
     "flake8>=6.0.0",
 ]
+
+ollama = [
+    "langchain-ollama>=0.1.0",
+]
+
+finetuning = [
+    "datasets>=2.14.0",
+    "pandas>=2.0.0",
+]
+
+all = [
+    "agentfoundry[dev,ollama,finetuning]",
+]

@@ -1,4 +1,4 @@
-from core.central import make_llm, make_react_agent
+from core.central import make_llm, make_react_agent, make_verifier_llm
 from core.central import llm_summarize_tool  
 from core.messaging import MessageBus, Message, MessageType
 
@@ -87,7 +87,7 @@ def create_verifier():
     ]
     return make_react_agent(
         tools=tools,
-        llm=make_llm(temp=0),
+        llm=make_verifier_llm(temp=0),
         system_prompt=VERIFIER_SYSTEM_PROMPT,
     )
 

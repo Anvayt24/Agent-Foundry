@@ -1,5 +1,5 @@
 from langchain.tools import Tool
-from core.central import make_llm, make_react_agent
+from core.central import make_llm, make_react_agent, make_planner_llm
 import json
 import time
 from core.messaging import MessageBus, Message, MessageType
@@ -115,7 +115,7 @@ class PlannerA2A:
 def create_planner():
     """Orchestrator mode: return a LangChain ReAct planner agent (backward compatible)."""
     def plan_task(input_text: str) -> str:
-        llm = make_llm(temp=0)
+        llm = make_planner_llm(temp=0)
         prompt = f"""
         Break down this objective into subtasks: {input_text}
         
@@ -162,7 +162,7 @@ def create_planner():
     tools = tools + memory_tools
     return make_react_agent(
         tools=tools,
-        llm=make_llm(temp=0),
+        llm=make_planner_llm(temp=0),
         system_prompt=PLANNER_SYSTEM_PROMPT,
     )
 

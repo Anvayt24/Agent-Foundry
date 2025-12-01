@@ -2,6 +2,9 @@
 __pycache__/
 *.pyc
 
+.venv/
+
+
 /.mem0_chroma/
 /.rag_db/
 /src/agentfoundry.egg-info/

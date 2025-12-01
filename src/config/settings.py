@@ -19,9 +19,20 @@ LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 RAG_DB_PATH: Path = Path(os.getenv("RAG_DB_PATH", BASE_DIR / "rag_db"))
 MEM0_CHROMA_PATH: Path = Path(os.getenv("MEM0_CHROMA_PATH", BASE_DIR / ".mem0_chroma"))
 
-# LLM (Gemini)
+# Agent-specific Local Models (Ollama)
+# Format: "model_name" (defaults to Ollama backend)
+PLANNER_MODEL: str = os.getenv("PLANNER_MODEL", "llama3.2:1b-instruct-q8_0")
+WORKER_MODEL: str = os.getenv("WORKER_MODEL", "llama3.2:3b-instruct-q4_0")
+VERIFIER_MODEL: str = os.getenv("VERIFIER_MODEL", "llama3.2:1b-instruct-q8_0")
+
+# Model Backend Settings
+MODEL_BACKEND: str = os.getenv("MODEL_BACKEND", "ollama")  # ollama, gemini
+OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+
+# Fallback / Optional Gemini Settings
 GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
 GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+USE_GEMINI_FALLBACK: bool = os.getenv("USE_GEMINI_FALLBACK", "false").lower() == "true"
 
 # Optional MCP server
 MCP_TRANSPORT: str = os.getenv("MCP_TRANSPORT", "stdio")
