@@ -1,6 +1,8 @@
 import time
 from uuid import uuid4
 
+import _bootstrap  # noqa: F401  (adds src/ to sys.path)
+
 from core.messaging import MessageBus
 from agents.planner import create_planner_a2a, PlannerA2A
 from agents.worker import create_worker_a2a, WorkerA2A
