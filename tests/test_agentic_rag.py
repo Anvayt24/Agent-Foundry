@@ -1,56 +1,44 @@
-from config import GEMINI_MODEL, ensure_google_key
-from langchain.tools import Tool
-from langchain.agents import create_react_agent, AgentExecutor
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.prompts import PromptTemplate
-from RAG.rag_tool import rag_tool
+"""Smoke tests for the agentic RAG wiring.
 
-ensure_google_key()
+These tests avoid live LLM/network calls. They verify that the RAG tool is
+wrapped correctly and that the agent factory produces a usable executor.
+Tests that require a configured ``GEMINI_API_KEY`` are skipped when it is absent.
+"""
+import os
+import sys
+from pathlib import Path
 
-rag_search_tool = Tool(
-    name="RAG Search",
-    func=lambda query: rag_tool(query),
-    description="Use this tool to search the document knowledge base and get relevant context for a user query."
+import pytest
+
+SRC_DIR = Path(__file__).resolve().parents[1] / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
+requires_api_key = pytest.mark.skipif(
+    not os.getenv("GEMINI_API_KEY"),
+    reason="GEMINI_API_KEY not set; skipping tests that build LLM-backed agents.",
 )
 
-llm = ChatGoogleGenerativeAI(model=GEMINI_MODEL, temp=0)
 
-# ReAct agent
-tools = [rag_search_tool]
-prompt = PromptTemplate.from_template("""
-You are an intelligent AI assistant with access to tools.
-Your job is to answer user questions accurately.
+def test_rag_tool_is_callable():
+    """The RAG tool wrapper should be importable and callable."""
+    from RAG.rag_tool import rag_tool
 
-You have access to the following tools:
-{tools}
+    assert callable(rag_tool)
 
-Tool names: {tool_names}
 
-Use the following format:
-Question: The input question you must answer
-Thought: Reason about what to do next
-Action: The tool to use (must be exactly the name of the tool)
-Action Input: The input to the tool
-Observation: The tool's result
-... (this Thought/Action/Observation loop can repeat)
-Final Answer: The final answer to the original question
+@requires_api_key
+def test_worker_agent_builds():
+    """The worker factory should return an executor exposing invoke()."""
+    from agents.worker import create_worker
 
-Begin!
+    executor = create_worker()
+    assert hasattr(executor, "invoke")
 
-Question: {input}
-{agent_scratchpad}
-""")
-agent = create_react_agent(llm=llm, tools=tools, prompt=prompt)
 
-# Wrap in AgentExecutor
-agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parsing_errors=True) #why
+@requires_api_key
+def test_planner_agent_builds():
+    from agents.planner import create_planner
 
-if __name__ == "__main__":
-    print("\nAgentic RAG (Gemini) ready! Ask anything about your docs.\n")
-    while True:
-        query = input("You: ")
-        if query.lower() in ["exit", "quit"]:
-            break
-        response = agent_executor.invoke({"input": query})
-        print("Agent:", response["output"])
- 
+    executor = create_planner()
+    assert hasattr(executor, "invoke")

@@ -1,46 +1,62 @@
+"""Centralized orchestrator: Planner -> Worker -> Verifier run sequentially."""
 import json
+import logging
+
+import _bootstrap  # noqa: F401  (adds src/ to sys.path)
+
 from agents.planner import create_planner
 from agents.worker import create_worker
 from agents.verifier import create_verifier
-from central import run_agent
+from core.central import run_agent
+
+logger = logging.getLogger(__name__)
+
+
+def _parse_subtasks(plan_raw: str) -> list[str]:
+    """Parse the planner's output into a list of subtasks.
+
+    Falls back to line-splitting if the planner did not return valid JSON.
+    """
+    try:
+        subtasks = json.loads(plan_raw).get("subtasks", [])
+        if subtasks:
+            return subtasks
+    except (json.JSONDecodeError, AttributeError):
+        pass
+    return [s.strip("-• ").strip() for s in plan_raw.splitlines() if s.strip()]
+
 
 def orchestrate(user_request: str) -> str:
-    # Create agents
     planner = create_planner()
     worker = create_worker()
     verifier = create_verifier()
 
-    # Planner
     plan_raw = run_agent(planner, user_request)
+    subtasks = _parse_subtasks(plan_raw)
 
-    # Parsing subtasks
-    try:
-        subtasks = json.loads(plan_raw).get("subtasks", [])
-    except Exception:
-        subtasks = [s.strip("-• ").strip() for s in plan_raw.splitlines() if s.strip()]
-
-    #Workers
     worker_outputs = []
     for i, task in enumerate(subtasks, 1):
         result = run_agent(worker, task)
         worker_outputs.append(f"[Subtask {i}] {task}\n{result}")
 
-    #Verifier
     bundle = "\n\n".join(worker_outputs)
-    final_answer = run_agent(verifier, bundle)
-
-    return final_answer
+    return run_agent(verifier, bundle)
 
 
-if __name__ == "__main__":
+def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     while True:
-        query = input("User: ")
-        if query.lower() in ("exit", "quit"):
+        try:
+            query = input("User: ")
+        except (EOFError, KeyboardInterrupt):
+            break
+        if query.strip().lower() in ("exit", "quit"):
             break
         try:
             print("Final Answer:", orchestrate(query))
-        except Exception as e:
-            print("Error in orchestration:", e)
+        except Exception:
+            logger.exception("Error during orchestration")
 
 
-
+if __name__ == "__main__":
+    main()

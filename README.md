@@ -114,10 +114,14 @@ cd AgentFoundry
 pip install -e .
 ```
 
-### 3. Run MCP Server (only when running over a different port)
+### 3. Run MCP Server (optional — the Worker spawns it automatically)
+
+The Worker launches the bundled MCP server over `stdio` on demand, so you do
+not normally need to start it yourself. To run it standalone (e.g. for a
+network transport):
 
 ```bash
-python -m MCP.MCP_servers
+python src/MCP/MCP_servers.py
 ```
 
 ### 4. Run the Orchestrator

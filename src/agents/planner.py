@@ -1,9 +1,13 @@
+import json
+import logging
+import time
+
 from langchain.tools import Tool
 from core.central import make_llm, make_react_agent
-import json
-import time
 from core.messaging import MessageBus, Message, MessageType
 from memory.memory_manager import memory_manager
+
+logger = logging.getLogger(__name__)
 
 PLANNER_SYSTEM_PROMPT = """
 You are the Planner Agent. Create an executable plan (ordered subtasks) for the user's request.
@@ -61,8 +65,8 @@ class PlannerA2A:
             plan_data = json.loads(plan) if isinstance(plan, str) else plan
             subtasks = plan_data.get("subtasks", [user_request]) if isinstance(plan_data, dict) else [user_request]
             return subtasks
-        except Exception as e:
-            print(f"Error in create_subtasks: {e}")
+        except Exception:
+            logger.exception("create_subtasks failed; falling back to single subtask")
             return [user_request]
             
     def process_user_request(self, user_request: str, session_id: str | None = None):

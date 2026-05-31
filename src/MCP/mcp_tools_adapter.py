@@ -1,22 +1,32 @@
 import sys
 import asyncio
 import json
+import logging
 from pathlib import Path
 from langchain.tools import Tool
 from pydantic import BaseModel, create_model
 from typing import Type, Dict, Any
-import traceback
+
+logger = logging.getLogger(__name__)
 
 _CACHED_TOOLS = None
 
 TYPE_MAP = {
-    "string" : str,
-    "number": int,
+    "string": str,
+    "number": float,
     "integer": int,
     "boolean": bool,
     "object": dict,
     "array": list,
 }
+
+
+def _server_params():
+    """Build the StdioServerParameters that spawn the bundled MCP server."""
+    from mcp import StdioServerParameters
+
+    server_path = str((Path(__file__).parent / "MCP_servers.py").resolve())
+    return StdioServerParameters(command=sys.executable, args=[server_path])
 
 def _build_argument_schema(model_name: str, json_schema: Dict[str, Any]) -> Type[BaseModel]:
     """
@@ -74,28 +84,25 @@ def _create_mcp_tool_wrapper(tool_name: str, tool_description: str, tool_paramet
                     raise TypeError(f"Unsupported positional argument type: {type(arg).__name__}")
 
             async def _call():
-                from mcp import ClientSession, StdioServerParameters
+                from mcp import ClientSession
                 from mcp.client.stdio import stdio_client
-                
-                server_path = str((Path(__file__).parent / "MCP_servers.py").resolve())
-                
-                params = StdioServerParameters(command=sys.executable, args=[server_path])
-                
-                async with stdio_client(params) as (read, write):
+
+                async with stdio_client(_server_params()) as (read, write):
                     async with ClientSession(read, write) as session:
                         await session.initialize()
                         # Pass the arguments received from the agent directly to the tool
                         result = await session.call_tool(tool_name, kwargs)
-                        
+
                         if hasattr(result, "content") and result.content:
                             if isinstance(result.content, list):
                                 return "\n".join(str(item.text) if hasattr(item, "text") else str(item) for item in result.content)
                             return str(result.content)
                         return str(result)
-            
+
             return asyncio.run(_call())
-            
+
         except Exception as e:
+            logger.exception("Error calling MCP tool %s", tool_name)
             return f"Error calling {tool_name}: {str(e)}"
     
     #langchain tool with the schema so the agent knows the arguments.
@@ -113,29 +120,26 @@ def load_mcp_tools():
         return _CACHED_TOOLS
 
     try:
-        from mcp import ClientSession, StdioServerParameters
+        from mcp import ClientSession
         from mcp.client.stdio import stdio_client
 
         async def _get_tool_info():
-            server_path = str((Path(__file__).parent / "MCP_servers.py").resolve())
-            params = StdioServerParameters(command=sys.executable, args=[server_path])
-
-            async with stdio_client(params) as (read, write):
+            async with stdio_client(_server_params()) as (read, write):
                 async with ClientSession(read, write) as session:
                     await session.initialize()
                     tools_response = await session.list_tools()
-                    #fetch the tool's parameters (its schema) as well.
+                    # Fetch the tool's parameters (its schema) as well.
                     return [(tool.name, tool.description, tool.inputSchema) for tool in tools_response.tools]
 
         tool_info = asyncio.run(_get_tool_info())
-        
-        # Create a structured tool for each item returned by the server
+
+        # Create a structured tool for each item returned by the server.
         tools = [_create_mcp_tool_wrapper(name, desc, params) for name, desc, params in tool_info]
-        
+
+        logger.info("Loaded %d MCP tool(s): %s", len(tools), ", ".join(t.name for t in tools))
         _CACHED_TOOLS = tools
         return tools
-    except Exception as e:
-        print(f"[MCP Adapter Error] Could not load tools: {e}")
-        traceback.print_exc()
+    except Exception:
+        logger.exception("Could not load MCP tools")
         _CACHED_TOOLS = []
         return []

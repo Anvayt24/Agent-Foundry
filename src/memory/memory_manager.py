@@ -1,5 +1,9 @@
+import logging
+
 from config import GEMINI_API_KEY, GEMINI_MODEL, MEM0_CHROMA_PATH, ensure_google_key
 from mem0 import Memory
+
+logger = logging.getLogger(__name__)
 
 
 class MemoryManager:
@@ -53,8 +57,8 @@ class MemoryManager:
             if isinstance(content, str):
                 content = [{"role": "user", "content": content}]
             return self.memory.add(content, user_id=user_id, metadata=metadata, infer=self.infer_enabled)
-        except Exception as exc:
-            print(f"Mem0 add_memory error: {exc}")
+        except Exception:
+            logger.exception("Mem0 add_memory failed")
             return None
 
     def search_memories(self, query: str, user_id: str = "agent_system", limit: int = 5):
@@ -63,8 +67,8 @@ class MemoryManager:
             return []
         try:
             results = self.memory.search(query=query, user_id=user_id)
-        except Exception as exc:
-            print(f"Mem0 search_memories error: {exc}")
+        except Exception:
+            logger.exception("Mem0 search_memories failed")
             return []
 
         if not results:
