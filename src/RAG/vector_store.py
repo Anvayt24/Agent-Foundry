@@ -26,10 +26,10 @@ def build_vector_store(data_path: str, persist_directory=None):
         )
 
     docs = load_and_chunk_doc(data_path)
-    vectordb = Chroma.from_documents(
+    # langchain-chroma (Chroma 0.4+) persists automatically when persist_directory
+    # is provided; the explicit .persist() call was removed upstream.
+    return Chroma.from_documents(
         documents=docs,
         embedding=embeddings,
-        persist_directory=str(persist_path)
+        persist_directory=str(persist_path),
     )
-    vectordb.persist()
-    return vectordb
